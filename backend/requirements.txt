@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+httpx
+pydantic
+scikit-learn
+numpy
+pandas
+python-multipart
+sqlalchemy
+aiosqlite
