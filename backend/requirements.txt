@@ -8,3 +8,5 @@ pandas
 python-multipart
 sqlalchemy
 aiosqlite
+python-jose[cryptography]
+passlib[bcrypt]

@@ -19,6 +19,15 @@ class ScanResultDB(Base):
     status = Column(String)
     logs = Column(JSON, default=lambda: [])
 
+class UserDB(Base):
+    __tablename__ = "users"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    full_name = Column(String)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class FeedbackDB(Base):
     __tablename__ = "feedback"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))

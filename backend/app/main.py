@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 import uuid
 import json
 
-from app.models.schemas import ScanRequest, ScanResult, Feedback, Vulnerability
+from app.models.schemas import ScanRequest, ScanResult, Feedback, Vulnerability, UserCreate, UserLogin, UserResponse, Token
 from app.core.scanner import scan_target
 from app.core.ml import BERTContextualClassifier
-from app.db.session import SessionLocal, init_db, ScanResultDB, FeedbackDB
+from app.db.session import SessionLocal, init_db, ScanResultDB, FeedbackDB, UserDB
+from app.core.auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 app = FastAPI(
     title="WVS Enterprise - Security Intelligence Platform",
@@ -82,7 +83,7 @@ async def run_scan_task(scan_id: str, url: str):
         db.close()
 
 @app.post("/scan", response_model=ScanResult)
-async def trigger_scan(request: ScanRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+async def trigger_scan(request: ScanRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     scan_id = str(uuid.uuid4())
     db_scan = ScanResultDB(
         id=scan_id, 
@@ -92,6 +93,7 @@ async def trigger_scan(request: ScanRequest, background_tasks: BackgroundTasks, 
     )
     db.add(db_scan)
     db.commit()
+    db.refresh(db_scan)
     
     background_tasks.add_task(run_scan_task, scan_id, str(request.url))
     return db_scan
@@ -104,7 +106,7 @@ async def get_scan_result(scan_id: str, db: Session = Depends(get_db)):
     return db_scan
 
 @app.get("/scans", response_model=List[ScanResult])
-async def list_scans(db: Session = Depends(get_db)):
+async def list_scans(db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     # Feature 9: Scan History Support
     return db.query(ScanResultDB).order_by(ScanResultDB.timestamp.desc()).all()
 
@@ -134,7 +136,7 @@ async def submit_feedback(feedback: Feedback, db: Session = Depends(get_db)):
     return {"message": "Model updated via continuous feedback pipeline."}
 
 @app.get("/stats")
-async def get_stats(db: Session = Depends(get_db)):
+async def get_stats(db: Session = Depends(get_db), current_user: UserDB = Depends(get_current_user)):
     total_scans = db.query(ScanResultDB).count()
     feedback_count = db.query(FeedbackDB).count()
     return {
@@ -143,3 +145,34 @@ async def get_stats(db: Session = Depends(get_db)):
         "analyst_labels_ingested": feedback_count,
         "active_weights": ml_engine.weights
     }
+
+# Auth Endpoints
+@app.post("/signup", response_model=UserResponse)
+async def signup(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(UserDB).filter(UserDB.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_pass = get_password_hash(user.password)
+    new_user = UserDB(
+        email=user.email,
+        hashed_password=hashed_pass,
+        full_name=user.full_name
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.post("/login", response_model=Token)
+async def login(user_data: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.email == user_data.email).first()
+    if not user or not verify_password(user_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/me", response_model=UserResponse)
+async def get_me(current_user: UserDB = Depends(get_current_user)):
+    return current_user
