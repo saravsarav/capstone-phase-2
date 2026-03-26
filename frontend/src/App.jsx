@@ -31,6 +31,42 @@ function cn(...inputs) {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
+const WVSLogo = ({ className, onClick }) => (
+  <div onClick={onClick} className={cn("flex items-center gap-3 group cursor-pointer", className)}>
+    {/* SVG recreation of the user's logo */}
+    <svg 
+      width="34" 
+      height="34" 
+      viewBox="0 0 100 100" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className="drop-shadow-[0_0_8px_rgba(168,85,247,0.3)]"
+    >
+      <defs>
+        <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#8b5cf6" />
+          <stop offset="100%" stopColor="#ec4899" />
+        </linearGradient>
+      </defs>
+      {/* Outer broken square */}
+      <path 
+        d="M10 10 H90 V90 H10 V10 Z M25 25 V75 H75 V25 H25 Z" 
+        fill="url(#logo-grad)" 
+        fillRule="evenodd" 
+      />
+      {/* Small diagonal cuts to match the "broken" look */}
+      <path d="M10 10 L25 25" stroke="black" strokeWidth="4" />
+      <path d="M90 90 L75 75" stroke="black" strokeWidth="4" />
+    </svg>
+    <span 
+      className="text-3xl font-bold tracking-tight text-white transition-colors"
+      style={{ fontFamily: "'Caveat', cursive" }}
+    >
+      WVS
+    </span>
+  </div>
+);
+
 function App() {
   const [url, setUrl] = useState("");
   const [scanning, setScanning] = useState(false);
@@ -140,12 +176,7 @@ function App() {
       <nav className="border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-2 group cursor-pointer">
-              <div className="w-8 h-8 bg-brand-cyan rounded-sm flex items-center justify-center">
-                <ShieldAlert className="text-black w-5 h-5" />
-              </div>
-              <span className="text-xl font-black tracking-tighter group-hover:text-brand-cyan transition-colors">SENTINEL</span>
-            </div>
+            <WVSLogo onClick={() => setActiveTab('dashboard')} />
             {token && (
               <div className="hidden md:flex items-center gap-6 text-[10px] items-center font-bold tracking-widest text-slate-500">
                 <span 
@@ -573,7 +604,7 @@ function App() {
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2">
               <Terminal className="w-3 h-3 text-brand-cyan" />
-              SENTINEL_CORE_V2.0.4
+              WVS_CORE_V2.0.4
             </span>
             <span className="flex items-center gap-2">
               <Activity className="w-3 h-3 text-green-500" />
