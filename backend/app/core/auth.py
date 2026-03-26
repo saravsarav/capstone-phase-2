@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from ..db.session import SessionLocal, UserDB
 
 # Configuration
-SECRET_KEY = "SENTINEL_CYBER_KEY_ALPHA_9" # In production, use env var
+import os
+SECRET_KEY = os.getenv("SECRET_KEY", "SENTINEL_CYBER_KEY_ALPHA_9")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 24 hours
 

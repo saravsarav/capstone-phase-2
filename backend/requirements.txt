@@ -10,3 +10,5 @@ sqlalchemy
 aiosqlite
 python-jose[cryptography]
 passlib[bcrypt]
+gunicorn
+psycopg2-binary

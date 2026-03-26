@@ -36,8 +36,16 @@ class FeedbackDB(Base):
     corrected_severity = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./wvs_storage.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+import os
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./wvs_storage.db")
+# For PostgreSQL with SQLAlchemy, often need to fix "postgres://" vs "postgresql://"
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(DATABASE_URL)
+# If it's SQLite, need to add "check_same_thread"
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def init_db():
