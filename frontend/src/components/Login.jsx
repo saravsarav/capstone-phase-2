@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ShieldAlert, Lock, Mail, User, ArrowRight, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 const Login = ({ onLoginSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
