@@ -14,6 +14,10 @@ class BERTContextualClassifier:
             "missing_header": 1.5,
             "information_disclosure": 0.8,
             "injection_pattern": 4.5,
+            "sql_injection": 5.0,
+            "xss": 4.0,
+            "open_redirect": 3.5,
+            "cors": 2.5,
             "auth_issue": 3.5,
             "bias": 0.2
         }
@@ -43,11 +47,19 @@ class BERTContextualClassifier:
         scores = []
         for v in vulnerabilities:
             v_type = v['type'].lower()
-            if "header" in v_type:
+            if "sql injection" in v_type:
+                scores.append(self.weights["sql_injection"])
+            elif "cross-site scripting" in v_type or "xss" in v_type:
+                scores.append(self.weights["xss"])
+            elif "open redirect" in v_type:
+                scores.append(self.weights["open_redirect"])
+            elif "cors" in v_type:
+                scores.append(self.weights["cors"])
+            elif "header" in v_type:
                 scores.append(self.weights["missing_header"])
             elif "disclosure" in v_type or "server" in v_type:
                 scores.append(self.weights["information_disclosure"])
-            elif "xss" in v_type or "injection" in v_type:
+            elif "injection" in v_type:
                 scores.append(self.weights["injection_pattern"])
             else:
                 scores.append(1.0)
@@ -81,7 +93,10 @@ class BERTContextualClassifier:
             
             if "header" in v_type: self.weights["missing_header"] = max(0.1, self.weights["missing_header"] + update_delta)
             if "disclosure" in v_type: self.weights["information_disclosure"] = max(0.1, self.weights["information_disclosure"] + update_delta)
-            if "xss" in v_type: self.weights["injection_pattern"] = max(0.1, self.weights["injection_pattern"] + update_delta)
+            if "sql injection" in v_type: self.weights["sql_injection"] = max(0.1, self.weights["sql_injection"] + update_delta)
+            if "cross-site scripting" in v_type or "xss" in v_type: self.weights["xss"] = max(0.1, self.weights["xss"] + update_delta)
+            if "open redirect" in v_type: self.weights["open_redirect"] = max(0.1, self.weights["open_redirect"] + update_delta)
+            if "cors" in v_type: self.weights["cors"] = max(0.1, self.weights["cors"] + update_delta)
 
         print(f"[ML-CORE] Online learning triggered. Updated weights: {self.weights}")
         return self.weights
